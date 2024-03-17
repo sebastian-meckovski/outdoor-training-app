@@ -22,6 +22,7 @@ namespace PullupBars.Controllers
             return Ok(await dbContext.PullupBars.ToListAsync());
         }
         [HttpPost]
+        [Authorize]
         async public Task<IActionResult> AddPullUpBar(AddPullUpBar addPullUpBar)
         {
             var pullUpBar = new PullUpBar()
