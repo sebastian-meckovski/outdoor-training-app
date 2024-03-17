@@ -17,14 +17,6 @@ builder.Services.AddDbContext<PullupBarsAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("PullUpBarsConnectionString")
     ));
 
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    options.SignIn.RequireConfirmedEmail = true;
-});
-
-//builder.Services.AddIdentityApiEndpoints<IdentityUser>()
-//    .AddEntityFrameworkStores<PullupBarsAPIDbContext>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
