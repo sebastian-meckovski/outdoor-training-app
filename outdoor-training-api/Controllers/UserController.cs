@@ -65,7 +65,7 @@ namespace OutdoorTraining.Controllers
             return Ok($"Welcome back, {user.Email}! :)");
         }
 
-        [HttpGet("verify")]
+        [HttpPost("verify")]
         public async Task<IActionResult> Verify(string token)
         {
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.VerificationToken == token);
