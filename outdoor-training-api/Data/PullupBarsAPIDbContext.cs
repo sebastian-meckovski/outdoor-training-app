@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿//using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PullupBars.Models;
-using OutdoorTraining.Models;
 
 namespace PullupBars.Data
 {
@@ -11,7 +11,5 @@ namespace PullupBars.Data
 
         }
         public DbSet<PullUpBar> PullupBars { get; set; }
-        public DbSet<User> Users => Set<User>();
-
     }
 }
