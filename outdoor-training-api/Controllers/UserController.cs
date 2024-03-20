@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Any;
 using OutdoorTraining.Models;
 using PullupBars.Data;
 using System.IdentityModel.Tokens.Jwt;
@@ -39,7 +40,7 @@ namespace OutdoorTraining.Controllers
 
 
             var user = new User
-            {   
+            {
                 Id = Guid.NewGuid(),
                 Email = request.Email,
                 PasswordHash = passwordHash,
@@ -130,6 +131,14 @@ namespace OutdoorTraining.Controllers
         {
             return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
         }
+
+        [HttpPost]
+        [Route("SignInWithGoogle")]
+        public IActionResult SignInWithGoogle(Credential credential)
+        {
+            return Ok(credential);
+        }
+
         [NonAction]
         private string CreateToken(User user)
         {

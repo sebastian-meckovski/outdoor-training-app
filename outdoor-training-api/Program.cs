@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PullupBars.Data;
@@ -9,7 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<PullupBarsAPIDbContext>(options => 
+builder.Services.AddDbContext<PullupBarsAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("PullUpBarsConnectionString")
     ));
 
@@ -26,6 +27,18 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
                 builder.Configuration.GetSection("AppSettings:Token").Value!))
     };
 });
+
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy(name: "CorsPolicy", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -33,6 +46,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 
