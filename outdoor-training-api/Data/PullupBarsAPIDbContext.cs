@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PullupBars.Models;
 using OutdoorTraining.Models;
 
 namespace PullupBars.Data
@@ -10,8 +9,15 @@ namespace PullupBars.Data
         {
 
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Add Identity related model configuration
+            base.OnModelCreating(modelBuilder);
+
+            // Your fluent modeling here
+        }
         public DbSet<PullUpBar> PullupBars { get; set; }
-        public DbSet<User> Users => Set<User>();
+        public DbSet<User> Users { get; set; }
 
     }
 }

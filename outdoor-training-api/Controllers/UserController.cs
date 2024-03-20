@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PullupBars.Data;
-using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
 using OutdoorTraining.Models;
+using PullupBars.Data;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace OutdoorTraining.Controllers
 {
@@ -11,11 +16,15 @@ namespace OutdoorTraining.Controllers
     public class UserController : ControllerBase
     {
         private readonly PullupBarsAPIDbContext dbContext;
-
-        public UserController(PullupBarsAPIDbContext dbContext)
+        public static User user = new User();
+        private readonly IConfiguration _configuration;
+        public UserController(PullupBarsAPIDbContext dbContext, IConfiguration configuration)
         {
             this.dbContext = dbContext;
+            _configuration = configuration;
         }
+
+
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserRegisterRequest request)
@@ -30,7 +39,8 @@ namespace OutdoorTraining.Controllers
 
 
             var user = new User
-            {
+            {   
+                Id = Guid.NewGuid(),
                 Email = request.Email,
                 PasswordHash = passwordHash,
                 VerificationToken = CreateRandomToken()
@@ -45,7 +55,6 @@ namespace OutdoorTraining.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
-            
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
             {
@@ -61,8 +70,9 @@ namespace OutdoorTraining.Controllers
             {
                 return BadRequest("Not verified!");
             }
+            string token = CreateToken(user);
 
-            return Ok($"Welcome back, {user.Email}! :)");
+            return Ok(token);
         }
 
         [HttpGet("verify")]
@@ -119,6 +129,30 @@ namespace OutdoorTraining.Controllers
         private string CreateRandomToken()
         {
             return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+        }
+        private string CreateToken(User user)
+        {
+            // List<Claim> claims = new()
+            //  {
+            //     new("UserEmail", user.Email),
+            // };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                 _configuration.GetSection("AppSettings:Token").Value!));
+
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var token = new JwtSecurityToken(
+                    claims: null,
+                    // claims: claims,
+                    expires: DateTime.Now.AddDays(1),
+                    signingCredentials: creds
+                );
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return jwt;
         }
     }
 }

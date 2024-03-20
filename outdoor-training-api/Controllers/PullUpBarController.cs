@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OutdoorTraining.Models;
 using PullupBars.Data;
 using PullupBars.Models;
 
@@ -21,16 +22,24 @@ namespace PullupBars.Controllers
         {
             return Ok(await dbContext.PullupBars.ToListAsync());
         }
+        [Authorize]
         [HttpPost]
         async public Task<IActionResult> AddPullUpBar(AddPullUpBar addPullUpBar)
         {
+            var userId = addPullUpBar.UserId;
+            var user = await dbContext.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return BadRequest("User not found");
+            }
             var pullUpBar = new PullUpBar()
             {
                 Id = Guid.NewGuid(),
                 DateAdded = DateTime.Now,
                 PosX = addPullUpBar.PosX,
                 PosY = addPullUpBar.PosY,
-                Description = addPullUpBar.Description
+                Description = addPullUpBar.Description,
+                UserId = user.Id
             };
 
             await dbContext.PullupBars.AddAsync(pullUpBar);
@@ -43,7 +52,8 @@ namespace PullupBars.Controllers
         {
             var pullupBar = await dbContext.PullupBars.FindAsync(id);
 
-            if (pullupBar != null) { 
+            if (pullupBar != null)
+            {
                 pullupBar.PosX = updatePullUpBar.PosX;
                 pullupBar.PosY = updatePullUpBar.PosY;
                 pullupBar.Description = updatePullUpBar.Description;
@@ -68,6 +78,7 @@ namespace PullupBars.Controllers
             return NotFound();
         }
         [HttpDelete]
+        [Authorize]
         [Route("{id:guid}")]
         public async Task<IActionResult> DeletePullupBar([FromRoute] Guid id)
         {
