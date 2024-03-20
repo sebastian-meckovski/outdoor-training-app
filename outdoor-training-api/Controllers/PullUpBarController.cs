@@ -97,7 +97,7 @@ namespace PullupBars.Controllers
 
             return NotFound();
         }
-
+        [NonAction]
         public string? GetJWTTokenClaim(string token, string claimName)
         {
                 var tokenHandler = new JwtSecurityTokenHandler();

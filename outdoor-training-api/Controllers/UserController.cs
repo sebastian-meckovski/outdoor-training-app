@@ -130,6 +130,7 @@ namespace OutdoorTraining.Controllers
         {
             return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
         }
+        [NonAction]
         private string CreateToken(User user)
         {
             List<Claim> claims = new()
@@ -141,11 +142,11 @@ namespace OutdoorTraining.Controllers
                  _configuration.GetSection("AppSettings:Token").Value!));
 
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha384);
 
             var token = new JwtSecurityToken(
                     claims: claims,
-                    expires: DateTime.Now.AddDays(1),
+                    expires: DateTime.Now.AddMinutes(60),
                     signingCredentials: creds
                 );
 
