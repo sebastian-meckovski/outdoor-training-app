@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OutdoorTraining.Models;
@@ -26,12 +28,15 @@ namespace PullupBars.Controllers
         [HttpPost]
         async public Task<IActionResult> AddPullUpBar(AddPullUpBar addPullUpBar)
         {
-            var userId = addPullUpBar.UserId;
-            var user = await dbContext.Users.FindAsync(userId);
-            if (user == null)
+            var token = await HttpContext.GetTokenAsync("access_token");
+            string? claim = token is not null ? GetJWTTokenClaim(token, JwtRegisteredClaimNames.Sub) : null;
+            var user = claim is not null ? await dbContext.Users.FindAsync(new Guid(claim)) : null;
+
+            if (user == null || claim == null)
             {
                 return BadRequest("User not found");
             }
+
             var pullUpBar = new PullUpBar()
             {
                 Id = Guid.NewGuid(),
@@ -39,7 +44,7 @@ namespace PullupBars.Controllers
                 PosX = addPullUpBar.PosX,
                 PosY = addPullUpBar.PosY,
                 Description = addPullUpBar.Description,
-                UserId = user.Id
+                UserId = new Guid(claim)
             };
 
             await dbContext.PullupBars.AddAsync(pullUpBar);
@@ -91,6 +96,14 @@ namespace PullupBars.Controllers
             }
 
             return NotFound();
+        }
+
+        public string? GetJWTTokenClaim(string token, string claimName)
+        {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var securityToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
+                string? claimValue = securityToken.Claims.FirstOrDefault(c => c.Type == claimName)?.Value;
+                return claimValue;  
         }
     }
 }

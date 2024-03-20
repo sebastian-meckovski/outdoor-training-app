@@ -132,10 +132,10 @@ namespace OutdoorTraining.Controllers
         }
         private string CreateToken(User user)
         {
-            // List<Claim> claims = new()
-            //  {
-            //     new("UserEmail", user.Email),
-            // };
+            List<Claim> claims = new()
+            {
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                  _configuration.GetSection("AppSettings:Token").Value!));
@@ -144,8 +144,7 @@ namespace OutdoorTraining.Controllers
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var token = new JwtSecurityToken(
-                    claims: null,
-                    // claims: claims,
+                    claims: claims,
                     expires: DateTime.Now.AddDays(1),
                     signingCredentials: creds
                 );

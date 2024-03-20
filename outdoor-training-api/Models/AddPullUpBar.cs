@@ -11,7 +11,5 @@ namespace PullupBars.Models
         
         [Required, MinLength(10)]
         public string? Description { get; set; }
-        [ForeignKey("UserId")]
-        public virtual required Guid UserId { get; set;}
     }
 }
