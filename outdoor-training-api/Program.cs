@@ -1,7 +1,9 @@
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Any;
+using OutdoorTraining.Models;
 using PullupBars.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +29,13 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
                 builder.Configuration.GetSection("AppSettings:Token").Value!))
     };
 });
+
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+  {
+      options.SignIn.RequireConfirmedAccount = true;
+  })
+  .AddEntityFrameworkStores<PullupBarsAPIDbContext>() // Register Entity Framework Core's UserStore<TUser>
+  .AddDefaultTokenProviders();
 
 builder.Services.AddCors(opt =>
 {

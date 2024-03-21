@@ -1,4 +1,6 @@
 ﻿
+using Google.Apis.Auth;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,13 +18,22 @@ namespace OutdoorTraining.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly PullupBarsAPIDbContext dbContext;
-        public static User user = new User();
+        private readonly PullupBarsAPIDbContext _dbContext;
+        // public static User user = new User();
         private readonly IConfiguration _configuration;
-        public UserController(PullupBarsAPIDbContext dbContext, IConfiguration configuration)
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
+        public UserController(
+          PullupBarsAPIDbContext dbContext,
+          IConfiguration configuration,
+          UserManager<AppUser> userManager,
+          SignInManager<AppUser> signInManager
+          )
         {
-            this.dbContext = dbContext;
+            _dbContext = dbContext;
             _configuration = configuration;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
 
@@ -30,101 +41,100 @@ namespace OutdoorTraining.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserRegisterRequest request)
         {
-            if (dbContext.Users.Any(u => u.Email == request.Email))
+            var user = new AppUser
             {
-                return BadRequest("User already exists.");
-            }
-
-            string passwordHash
-                  = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
                 Email = request.Email,
-                PasswordHash = passwordHash,
+                UserName = request.Email,
                 VerificationToken = CreateRandomToken()
             };
 
-            dbContext.Users.Add(user);
-            await dbContext.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, request.Password);
 
-            return Ok("User successfully created!");
+            return Ok(result);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _userManager.FindByEmailAsync(request.Email);
+
             if (user == null)
             {
-                return BadRequest("User not found.");
+                return BadRequest("Invalid email or password.");
             }
 
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            var result = await _signInManager.PasswordSignInAsync(user, request.Password, false, false);
+
+            if (result.Succeeded)
             {
-                return BadRequest("Password is incorrect.");
+                // If sign-in succeeded, you might generate a token or return some user information
+                return Ok(new { Message = "Login successful", User = user });
             }
-
-            if (user.VerifiedAt == null)
+            else
             {
-                return BadRequest("Not verified!");
+                // If sign-in failed, return an error message
+                return BadRequest("Invalid email or password.");
             }
-            string token = CreateToken(user);
-
-            return Ok(token);
         }
 
         [HttpGet("verify")]
-        public async Task<IActionResult> Verify(string token)
+        public async Task<IActionResult> Verify(string token, string id)
         {
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.VerificationToken == token);
-            if (user == null)
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null || user.VerificationToken != token)
             {
                 return BadRequest("Invalid token.");
             }
 
-            user.VerifiedAt = DateTime.Now;
-            await dbContext.SaveChangesAsync();
+            user.EmailConfirmed = true;
+            user.VerificationToken = null;
+            var result = await _userManager.UpdateAsync(user);
 
-            return Ok("User verified! :)");
+            if (result.Succeeded)
+            {
+                return Ok("user " + user.Email + "confirmed");
+            }
+            else
+            {
+                return BadRequest("Invalid token");
+            }
         }
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(string email)
         {
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
                 return BadRequest("User not found.");
             }
 
-            user.PasswordResetToken = CreateRandomToken();
-            user.ResetTokenExpires = DateTime.Now.AddDays(1);
-            await dbContext.SaveChangesAsync();
+            // user.PasswordResetToken = CreateRandomToken();
+            // user.ResetTokenExpires = DateTime.Now.AddDays(1);
+            // await dbContext.SaveChangesAsync();
 
-            return Ok("You may now reset your password.");
+            return Ok("forgot password is still work in progress!");
         }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResettPassword(ResetPasswordRequest request)
         {
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == request.Token);
-            if (user == null || user.ResetTokenExpires < DateTime.Now)
-            {
-                return BadRequest("Invalid Token.");
-            }
+            // var user = await userManager.FirstOrDefaultAsync(u => u.PasswordResetToken == request.Token);
+            // if (user == null || user.ResetTokenExpires < DateTime.Now)
+            // {
+            //     return BadRequest("Invalid Token.");
+            // }
 
-            string passwordHash
-                           = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            user.PasswordHash = passwordHash;
-            user.PasswordResetToken = null;
-            user.ResetTokenExpires = null;
+            // string passwordHash
+            //                = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            // user.PasswordHash = passwordHash;
+            // user.PasswordResetToken = null;
+            // user.ResetTokenExpires = null;
 
-            await dbContext.SaveChangesAsync();
+            // await dbContext.SaveChangesAsync();
 
-            return Ok("Password successfully reset.");
+            return Ok("Reset password is work in progress...");
         }
 
         private string CreateRandomToken()
@@ -134,13 +144,20 @@ namespace OutdoorTraining.Controllers
 
         [HttpPost]
         [Route("SignInWithGoogle")]
-        public IActionResult SignInWithGoogle(Credential credential)
+        public async Task<IActionResult> SignInWithGoogle(Credential credential)
         {
-            return Ok(credential);
+            var settings = new GoogleJsonWebSignature.ValidationSettings()
+            {
+                Audience = new List<string> { "875031025071-tbnars2a8b5qv3ihcg2gb3tf3oclmept.apps.googleusercontent.com" }
+            };
+            var payload = await GoogleJsonWebSignature.ValidateAsync(credential.credential, settings);
+            var user = payload.Name;
+            var email = payload.Email;
+            return Ok(user + email);
         }
 
         [NonAction]
-        private string CreateToken(User user)
+        private string CreateToken(AppUser user)
         {
             List<Claim> claims = new()
             {

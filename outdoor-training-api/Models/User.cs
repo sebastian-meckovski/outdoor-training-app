@@ -1,10 +1,9 @@
-﻿namespace OutdoorTraining.Models
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace OutdoorTraining.Models
 {
-    public class User
+    public class AppUser : IdentityUser
     {
-        public Guid Id { get; set; } 
-        public string Email { get; set; } = string.Empty;
-        public string? PasswordHash { get; set; }
         public string? VerificationToken { get; set; }
         public DateTime? VerifiedAt { get; set; }
         public string? PasswordResetToken { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OutdoorTraining.Models;
@@ -14,12 +15,15 @@ namespace PullupBars.Controllers
     public class PullUpBarController : Controller
     {
         private readonly PullupBarsAPIDbContext dbContext;
+        private readonly UserManager<AppUser> userManager;
 
-        public PullUpBarController(PullupBarsAPIDbContext dbContext)
+        public PullUpBarController(PullupBarsAPIDbContext dbContext, UserManager<AppUser> userManager)
         {
             this.dbContext = dbContext;
+            this.userManager = userManager;
         }
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllPullUpBars()
         {
             return Ok(await dbContext.PullupBars.ToListAsync());
@@ -30,7 +34,7 @@ namespace PullupBars.Controllers
         {
             var token = await HttpContext.GetTokenAsync("access_token");
             string? claim = token is not null ? GetJWTTokenClaim(token, JwtRegisteredClaimNames.Sub) : null;
-            var user = claim is not null ? await dbContext.Users.FindAsync(new Guid(claim)) : null;
+            var user = claim is not null ? await userManager.FindByIdAsync(claim) : null;
 
             if (user == null || claim == null)
             {
@@ -100,10 +104,10 @@ namespace PullupBars.Controllers
         [NonAction]
         public string? GetJWTTokenClaim(string token, string claimName)
         {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var securityToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
-                string? claimValue = securityToken.Claims.FirstOrDefault(c => c.Type == claimName)?.Value;
-                return claimValue;  
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var securityToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
+            string? claimValue = securityToken.Claims.FirstOrDefault(c => c.Type == claimName)?.Value;
+            return claimValue;
         }
     }
 }
