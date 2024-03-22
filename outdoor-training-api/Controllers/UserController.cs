@@ -1,6 +1,7 @@
 ﻿
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -93,7 +94,7 @@ namespace OutdoorTraining.Controllers
 
             if (result.Succeeded)
             {
-                return Ok("user " + user.Email + "confirmed");
+                return Ok("user " + user.Email + " confirmed");
             }
             else
             {
@@ -102,37 +103,38 @@ namespace OutdoorTraining.Controllers
         }
 
         [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword(string email)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDTO request)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
             {
                 return BadRequest("User not found.");
             }
+            // TODO
+            // Email logic needs to go in this controller
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var callbackUrl = Url.Action("ResetPassword", "Auth", new { userId = user.Id, token }, protocol: HttpContext.Request.Scheme);
 
-            // user.PasswordResetToken = CreateRandomToken();
-            // user.ResetTokenExpires = DateTime.Now.AddDays(1);
-            // await dbContext.SaveChangesAsync();
-
-            return Ok("forgot password is still work in progress!");
+            return Ok("this is the link: " + callbackUrl);
         }
 
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResettPassword(ResetPasswordRequest request)
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
         {
-            // var user = await userManager.FirstOrDefaultAsync(u => u.PasswordResetToken == request.Token);
-            // if (user == null || user.ResetTokenExpires < DateTime.Now)
-            // {
-            //     return BadRequest("Invalid Token.");
-            // }
+            var user = await _userManager.FindByIdAsync(request.UserId);
+            if (user == null || user.ResetTokenExpires < DateTime.Now)
+            {
+                return BadRequest("Invalid Token.");
+            }
 
+            // _userManager.ResetPasswordAsync(user, request.)
             // string passwordHash
             //                = BCrypt.Net.BCrypt.HashPassword(request.Password);
             // user.PasswordHash = passwordHash;
             // user.PasswordResetToken = null;
             // user.ResetTokenExpires = null;
 
-            // await dbContext.SaveChangesAsync();
+            // var result = await _userManager.UpdateAsync(user, request.Password);
 
             return Ok("Reset password is work in progress...");
         }

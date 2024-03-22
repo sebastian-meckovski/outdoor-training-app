@@ -15,12 +15,14 @@ namespace PullupBars.Controllers
     public class PullUpBarController : Controller
     {
         private readonly PullupBarsAPIDbContext dbContext;
-        private readonly UserManager<AppUser> userManager;
+        // private readonly UserManager<AppUser> userManager;
 
-        public PullUpBarController(PullupBarsAPIDbContext dbContext, UserManager<AppUser> userManager)
+        public PullUpBarController(PullupBarsAPIDbContext dbContext
+        //  UserManager<AppUser> userManager
+         )
         {
             this.dbContext = dbContext;
-            this.userManager = userManager;
+            // this.userManager = userManager;
         }
         [HttpGet]
         [Authorize]
@@ -34,12 +36,12 @@ namespace PullupBars.Controllers
         {
             var token = await HttpContext.GetTokenAsync("access_token");
             string? claim = token is not null ? GetJWTTokenClaim(token, JwtRegisteredClaimNames.Sub) : null;
-            var user = claim is not null ? await userManager.FindByIdAsync(claim) : null;
+            // var user = claim is not null ? await userManager.FindByIdAsync(claim) : null;
 
-            if (user == null || claim == null)
-            {
-                return BadRequest("User not found");
-            }
+            // if (user == null || claim == null)
+            // {
+            //     return BadRequest("User not found");
+            // }
 
             var pullUpBar = new PullUpBar()
             {
@@ -48,7 +50,9 @@ namespace PullupBars.Controllers
                 PosX = addPullUpBar.PosX,
                 PosY = addPullUpBar.PosY,
                 Description = addPullUpBar.Description,
-                UserId = new Guid(claim)
+                // UserId = new Guid(claim)
+                UserId = new Guid()
+
             };
 
             await dbContext.PullupBars.AddAsync(pullUpBar);

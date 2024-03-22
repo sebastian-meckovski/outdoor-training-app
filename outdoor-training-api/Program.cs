@@ -16,26 +16,19 @@ builder.Services.AddDbContext<PullupBarsAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("PullUpBarsConnectionString")
     ));
 
-builder.Services.AddAuthentication().AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ClockSkew = TimeSpan.FromSeconds(0),
-        RequireExpirationTime = true,
-        ValidateIssuerSigningKey = true,
-        ValidateAudience = false,
-        ValidateIssuer = false,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                builder.Configuration.GetSection("AppSettings:Token").Value!))
-    };
-});
-
-builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
-  {
-      options.SignIn.RequireConfirmedAccount = true;
-  })
-  .AddEntityFrameworkStores<PullupBarsAPIDbContext>() // Register Entity Framework Core's UserStore<TUser>
-  .AddDefaultTokenProviders();
+// builder.Services.AddAuthentication().AddJwtBearer(options =>
+// {
+//     options.TokenValidationParameters = new TokenValidationParameters
+//     {
+//         ClockSkew = TimeSpan.FromSeconds(0),
+//         RequireExpirationTime = true,
+//         ValidateIssuerSigningKey = true,
+//         ValidateAudience = false,
+//         ValidateIssuer = false,
+//         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+//                 builder.Configuration.GetSection("AppSettings:Token").Value!))
+//     };
+// });
 
 builder.Services.AddCors(opt =>
 {
@@ -48,6 +41,14 @@ builder.Services.AddCors(opt =>
     });
 });
 
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+  {
+      options.SignIn.RequireConfirmedAccount = true;
+  })
+  .AddEntityFrameworkStores<PullupBarsAPIDbContext>() 
+  .AddDefaultTokenProviders();
+
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -56,7 +57,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseCors("CorsPolicy");
+
+app.UseAuthentication();
 
 app.UseHttpsRedirection();
 

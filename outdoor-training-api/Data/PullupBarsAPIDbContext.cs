@@ -101,6 +101,16 @@ namespace PullupBars.Data
                 // Maps to the AspNetUserRoles table
                 b.ToTable("AspNetUserRoles");
             });
+
+            modelBuilder.Entity<IdentityRoleClaim<string>>(b =>
+            {
+                // Primary key
+                b.HasKey(rc => rc.Id);
+
+                // Maps to the AspNetRoleClaims table
+                b.ToTable("AspNetRoleClaims");
+            }
+            );
         }
         public DbSet<PullUpBar> PullupBars { get; set; }
         // public DbSet<User> Users { get; set; }

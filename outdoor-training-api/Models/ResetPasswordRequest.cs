@@ -4,11 +4,9 @@ namespace OutdoorTraining.Models
 {
     public class ResetPasswordRequest
     {
-        [Required]
-        public string Token { get; set; } = string.Empty;
-        [Required, MinLength(6, ErrorMessage = "Please enter at least 6 characters, dude!")]
-        public string Password { get; set; } = string.Empty;
-        [Required, Compare("Password")]
-        public string ConfirmPassword { get; set; } = string.Empty;
+        public required string Token { get; set; }
+        public required string UserId { get; set; }
+        public required string Password { get; set; }
+        public required string ConfirmPassword { get; set; }
     }
 }
