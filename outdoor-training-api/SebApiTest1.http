@@ -1,6 +1,0 @@
-@PullupBars_HostAddress = http://localhost:5048
-
-GET {{PullupBars_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
