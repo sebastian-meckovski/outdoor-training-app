@@ -30,16 +30,16 @@ namespace SportAdvisorAPI.Controllers
 
         // GET: api/TrainingSpots
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TrainingSpot>>> GetTrainingSpots()
+        public async Task<ActionResult<IEnumerable<GetTrainingSpotDTO>>> GetTrainingSpots()
         {
-            var TrainingSpots = await _trainingSpotsRepository.GetAllAsync();
-            var TrainingSpotsObjects = _mapper.Map<List<GetTrainingSpotDTO>>(TrainingSpots);
+            var trainingSpots = await _trainingSpotsRepository.GetAllAsync();
+            var TrainingSpotsObjects = _mapper.Map<List<GetTrainingSpotDTO>>(trainingSpots);
             return Ok(TrainingSpotsObjects);
         }
 
         // GET: api/TrainingSpots/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TrainingSpot>> GetTrainingSpot(Guid id)
+        public async Task<ActionResult<GetTrainingSpotDTO>> GetTrainingSpot(Guid id)
         {
             var trainingSpot = await _trainingSpotsRepository.GetAsync(id);
             if (trainingSpot is null)
@@ -54,18 +54,34 @@ namespace SportAdvisorAPI.Controllers
         // PUT: api/TrainingSpots/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTrainingSpot(Guid id, TrainingSpot trainingSpot)
+        [Authorize]
+        public async Task<IActionResult> PutTrainingSpot(Guid id, UpdateTrainingSpotDTO updateTrainingSpotDTO)
         {
-            if (id != trainingSpot.Id)
+            string? token = await HttpContext.GetTokenAsync("access_token");
+            string? userId = HelperFunctions.GetJWTTokenClaim(token, JwtRegisteredClaimNames.Sub);
+
+            // protect user records from being updated by other users
+            if (userId is null || updateTrainingSpotDTO.UserId.ToString() != userId)
+            {
+                return Unauthorized();
+            }
+            // disallow editing the id
+            if (id != updateTrainingSpotDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(trainingSpot).State = EntityState.Modified;
+            // get the requested record
+            var trainingSpotobject = await _trainingSpotsRepository.GetAsync(id);
+            if (trainingSpotobject is null)
+            {
+                return BadRequest();
+            }
+            _mapper.Map(updateTrainingSpotDTO, trainingSpotobject);
 
             try
-            {
-                await _context.SaveChangesAsync();
+            {   
+                await _trainingSpotsRepository.UpdateAsync(trainingSpotobject);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -75,11 +91,13 @@ namespace SportAdvisorAPI.Controllers
                 }
                 else
                 {
-                    throw;
+                    return BadRequest();
                 }
             }
 
-            return NoContent();
+            var trainingSpotToReturn = _mapper.Map<GetTrainingSpotDTO>(trainingSpotobject);
+
+            return Ok(trainingSpotToReturn);
         }
 
         // POST: api/TrainingSpots

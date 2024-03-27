@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SportAdvisorAPI.Contracts;
 using SportAdvisorAPI.Data;
 using SportAdvisorAPI.Helpers;
@@ -46,5 +47,22 @@ namespace SportAdvisorAPI.Repository
             var trainingSpotToReturn = _mapper.Map<GetTrainingSpotDTO>(newTrainingSpot);
             return trainingSpotToReturn;
         }
+        public new async Task<List<TrainingSpot>> GetAllAsync()
+        {
+            return await _context.Set<TrainingSpot>()
+                .Include(c => c.User)
+                .ToListAsync();
+        }
+
+        public async Task<TrainingSpot?> GetAsync(Guid id)
+        {
+            var trainingSpot = await _context.TrainingSpots
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            return trainingSpot;
+        }
+
+
     }
 }

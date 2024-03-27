@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace SportAdvisorAPI.Models
 {
     public class TrainingSpot
@@ -7,7 +9,7 @@ namespace SportAdvisorAPI.Models
         public required int PosX { get; set; }
         public required int PosY { get; set; }
         public string? Description { get; set; }
+        public required User User { get; set; }
 
-        public User? User { get; set; }
     }
 }
