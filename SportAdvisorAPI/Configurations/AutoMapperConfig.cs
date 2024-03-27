@@ -8,6 +8,8 @@ namespace SportAdvisorAPI.Configurations
         public AutoMapperConfig()
         {
             CreateMap<AddTrainingSpotDTO, TrainingSpot>().ReverseMap();
+            CreateMap<CreateTrainingSpotDTO, TrainingSpot>().ReverseMap();
+            CreateMap<GetTrainingSpotDTO, TrainingSpot>().ReverseMap();
             
             CreateMap<User, RegisterUserDto>().ReverseMap();
         }

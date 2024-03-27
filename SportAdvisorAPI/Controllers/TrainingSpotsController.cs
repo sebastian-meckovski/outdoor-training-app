@@ -1,8 +1,12 @@
+using System.IdentityModel.Tokens.Jwt;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SportAdvisorAPI.Contracts;
 using SportAdvisorAPI.Data;
+using SportAdvisorAPI.Helpers;
 using SportAdvisorAPI.Models;
 
 namespace SportAdvisorAPI.Controllers
@@ -28,29 +32,23 @@ namespace SportAdvisorAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TrainingSpot>>> GetTrainingSpots()
         {
-            if (_context.TrainingSpots == null)
-            {
-                return NotFound();
-            }
-            return await _context.TrainingSpots.ToListAsync();
+            var TrainingSpots = await _trainingSpotsRepository.GetAllAsync();
+            var TrainingSpotsObjects = _mapper.Map<List<GetTrainingSpotDTO>>(TrainingSpots);
+            return Ok(TrainingSpotsObjects);
         }
 
         // GET: api/TrainingSpots/5
         [HttpGet("{id}")]
         public async Task<ActionResult<TrainingSpot>> GetTrainingSpot(Guid id)
         {
-            if (_context.TrainingSpots == null)
+            var trainingSpot = await _trainingSpotsRepository.GetAsync(id);
+            if (trainingSpot is null)
             {
                 return NotFound();
             }
-            var trainingSpot = await _context.TrainingSpots.FindAsync(id);
+            var trainingSpotObject = _mapper.Map<GetTrainingSpotDTO>(trainingSpot);
 
-            if (trainingSpot == null)
-            {
-                return NotFound();
-            }
-
-            return trainingSpot;
+            return Ok(trainingSpotObject);
         }
 
         // PUT: api/TrainingSpots/5
@@ -87,18 +85,17 @@ namespace SportAdvisorAPI.Controllers
         // POST: api/TrainingSpots
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<TrainingSpot>> PostTrainingSpot(TrainingSpot trainingSpot)
+        [Authorize]
+        public async Task<ActionResult<GetTrainingSpotDTO>> PostTrainingSpot(CreateTrainingSpotDTO createTrainingSpotDTO)
         {
-            if (_context.TrainingSpots == null)
+            var token = await HttpContext.GetTokenAsync("access_token");
+            var result = await _trainingSpotsRepository.AddAsync(createTrainingSpotDTO, token);
+            if (result is null)
             {
-                return Problem("Entity set 'SportAdvisorDbContext.TrainingSpots'  is null.");
+                return BadRequest();
             }
-            _context.TrainingSpots.Add(trainingSpot);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetTrainingSpot", new { id = trainingSpot.Id }, trainingSpot);
+            return Ok(result);
         }
-
         // DELETE: api/TrainingSpots/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTrainingSpot(Guid id)
