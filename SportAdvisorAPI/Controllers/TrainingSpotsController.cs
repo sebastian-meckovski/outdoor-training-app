@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SportAdvisorAPI.Contracts;
-using SportAdvisorAPI.Data;
 using SportAdvisorAPI.Helpers;
 using SportAdvisorAPI.Models;
 
@@ -15,15 +14,11 @@ namespace SportAdvisorAPI.Controllers
     [ApiController]
     public class TrainingSpotsController : ControllerBase
     {
-        private readonly SportAdvisorDbContext _context;
         private readonly IMapper _mapper;
-
         private readonly ITrainingSpotsRepository _trainingSpotsRepository;
 
-
-        public TrainingSpotsController(SportAdvisorDbContext context, ITrainingSpotsRepository trainingSpotsRepository, IMapper mapper)
+        public TrainingSpotsController(ITrainingSpotsRepository trainingSpotsRepository, IMapper mapper)
         {
-            _context = context;
             _mapper = mapper;
             _trainingSpotsRepository = trainingSpotsRepository;
         }
@@ -80,12 +75,12 @@ namespace SportAdvisorAPI.Controllers
             _mapper.Map(updateTrainingSpotDTO, trainingSpotobject);
 
             try
-            {   
+            {
                 await _trainingSpotsRepository.UpdateAsync(trainingSpotobject);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TrainingSpotExists(id))
+                if (await TrainingSpotExists(id) == false)
                 {
                     return NotFound();
                 }
@@ -115,28 +110,32 @@ namespace SportAdvisorAPI.Controllers
             return Ok(result);
         }
         // DELETE: api/TrainingSpots/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTrainingSpot(Guid id)
         {
-            if (_context.TrainingSpots == null)
-            {
-                return NotFound();
-            }
-            var trainingSpot = await _context.TrainingSpots.FindAsync(id);
+            var token = await HttpContext.GetTokenAsync("access_token");
+            var userId = HelperFunctions.GetJWTTokenClaim(token, JwtRegisteredClaimNames.Sub);
+
+            var trainingSpot = await _trainingSpotsRepository.GetAsync(id);
             if (trainingSpot == null)
             {
                 return NotFound();
             }
 
-            _context.TrainingSpots.Remove(trainingSpot);
-            await _context.SaveChangesAsync();
+            if (trainingSpot.User.Id != userId)
+            {
+                return Unauthorized();
+            }
+            
+            await _trainingSpotsRepository.DeleteAsync(id);
 
-            return NoContent();
+            return Ok(_mapper.Map<GetTrainingSpotDTO>(trainingSpot));
         }
 
-        private bool TrainingSpotExists(Guid id)
+        private async Task<bool> TrainingSpotExists(Guid id)
         {
-            return (_context.TrainingSpots?.Any(e => e.Id == id)).GetValueOrDefault();
+            return await _trainingSpotsRepository.Exists(id);
         }
     }
 }
