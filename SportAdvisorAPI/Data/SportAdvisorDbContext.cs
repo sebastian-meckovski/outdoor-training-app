@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SportAdvisorAPI.Data.Configurations;
 using SportAdvisorAPI.Models;
 
 namespace SportAdvisorAPI.Data
@@ -15,6 +16,7 @@ namespace SportAdvisorAPI.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfiguration(new RoleConfiguration());
         }
     }
 }

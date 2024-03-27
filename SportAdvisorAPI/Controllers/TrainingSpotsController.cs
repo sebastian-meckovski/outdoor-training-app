@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SportAdvisorAPI.Contracts;
 using SportAdvisorAPI.Data;
 using SportAdvisorAPI.Models;
 
@@ -15,20 +12,26 @@ namespace SportAdvisorAPI.Controllers
     public class TrainingSpotsController : ControllerBase
     {
         private readonly SportAdvisorDbContext _context;
+        private readonly IMapper _mapper;
 
-        public TrainingSpotsController(SportAdvisorDbContext context)
+        private readonly ITrainingSpotsRepository _trainingSpotsRepository;
+
+
+        public TrainingSpotsController(SportAdvisorDbContext context, ITrainingSpotsRepository trainingSpotsRepository, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
+            _trainingSpotsRepository = trainingSpotsRepository;
         }
 
         // GET: api/TrainingSpots
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TrainingSpot>>> GetTrainingSpots()
         {
-          if (_context.TrainingSpots == null)
-          {
-              return NotFound();
-          }
+            if (_context.TrainingSpots == null)
+            {
+                return NotFound();
+            }
             return await _context.TrainingSpots.ToListAsync();
         }
 
@@ -36,10 +39,10 @@ namespace SportAdvisorAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<TrainingSpot>> GetTrainingSpot(Guid id)
         {
-          if (_context.TrainingSpots == null)
-          {
-              return NotFound();
-          }
+            if (_context.TrainingSpots == null)
+            {
+                return NotFound();
+            }
             var trainingSpot = await _context.TrainingSpots.FindAsync(id);
 
             if (trainingSpot == null)
@@ -86,10 +89,10 @@ namespace SportAdvisorAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<TrainingSpot>> PostTrainingSpot(TrainingSpot trainingSpot)
         {
-          if (_context.TrainingSpots == null)
-          {
-              return Problem("Entity set 'SportAdvisorDbContext.TrainingSpots'  is null.");
-          }
+            if (_context.TrainingSpots == null)
+            {
+                return Problem("Entity set 'SportAdvisorDbContext.TrainingSpots'  is null.");
+            }
             _context.TrainingSpots.Add(trainingSpot);
             await _context.SaveChangesAsync();
 
