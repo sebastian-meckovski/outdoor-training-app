@@ -45,6 +45,12 @@ namespace SportAdvisorAPI.Controllers
             {
                 return Unauthorized();
             }
+
+            var IsEmailConfirmed = await _authManager.IsEmailConfirmed(loginUserDTO);
+            if (!IsEmailConfirmed)
+            {
+                return Unauthorized("Email not confimed");
+            }
             return Ok(authResponse);
         }
 

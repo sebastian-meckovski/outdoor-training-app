@@ -84,5 +84,10 @@ namespace SportAdvisorAPI.Repository
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<bool> IsEmailConfirmed(LoginUserDTO loginUserDTO)
+        {
+            var user = await _userManager.FindByEmailAsync(loginUserDTO.Email);
+            return user != null && await _userManager.IsEmailConfirmedAsync(user);
+        }
     }
 }
