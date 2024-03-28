@@ -54,5 +54,19 @@ namespace SportAdvisorAPI.Controllers
             return Ok(authResponse);
         }
 
+        [HttpGet]
+        [Route("verify")]
+        public async Task<ActionResult> VerifyEmail(Guid token)
+        {
+            var result = await _authManager.VerifyEmail(token);
+            if (!result)
+            {
+                return BadRequest();
+            }
+            else
+            {
+                return Ok("Email has been confiremd");
+            }
+        }
     }
 }

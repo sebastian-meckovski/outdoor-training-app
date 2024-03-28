@@ -9,5 +9,8 @@ namespace SportAdvisorAPI.Contracts
         Task<AuthResponseDTO?> Login(LoginUserDTO user);
         Task<string> GenerateToken(User user);
         Task<bool> IsEmailConfirmed(LoginUserDTO loginUserDTO);
+        Task<bool> VerifyEmail(Guid verifyToken);
+        Task ForgotPassword(string email);
+        Task ResetPassword(ResetPasswordRequestDTO request);
     }
 }

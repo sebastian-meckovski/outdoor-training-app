@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SportAdvisorAPI.Data;
 
@@ -11,9 +12,11 @@ using SportAdvisorAPI.Data;
 namespace SportAdvisorAPI.Migrations
 {
     [DbContext(typeof(SportAdvisorDbContext))]
-    partial class SportAdvisorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240328080649_UpdatedUserForEmailConfirmLogic")]
+    partial class UpdatedUserForEmailConfirmLogic
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -6,6 +6,8 @@ using SportAdvisorAPI.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using SportAdvisorAPI.Models;
+using SportAdvisorAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace SportAdvisorAPI.Repository
 {
@@ -14,13 +16,15 @@ namespace SportAdvisorAPI.Repository
         private readonly IMapper _mapper;
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly SportAdvisorDbContext _context;
 
 
-        public AuthManagerRepository(IMapper mapper, UserManager<User> userManager, IConfiguration configuration)
+        public AuthManagerRepository(IMapper mapper, UserManager<User> userManager, IConfiguration configuration, SportAdvisorDbContext context)
         {
             _mapper = mapper;
             _userManager = userManager;
             _configuration = configuration;
+            _context = context;
         }
 
         public async Task<AuthResponseDTO?> Login(LoginUserDTO loginUserDTO)
@@ -49,7 +53,7 @@ namespace SportAdvisorAPI.Repository
         {
             var user = _mapper.Map<User>(registerUserDtouserDto);
             user.UserName = registerUserDtouserDto.Email;
-
+            user.VerifyToken = Guid.NewGuid();
             var result = await _userManager.CreateAsync(user, registerUserDtouserDto.Password);
 
             if (result.Succeeded)
@@ -88,6 +92,29 @@ namespace SportAdvisorAPI.Repository
         {
             var user = await _userManager.FindByEmailAsync(loginUserDTO.Email);
             return user != null && await _userManager.IsEmailConfirmedAsync(user);
+        }
+
+        public async Task<bool> VerifyEmail(Guid verifyToken)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.VerifyToken == verifyToken);
+            if (user is not null)
+            {
+                user.VerifyToken = null;
+                user.EmailConfirmed = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+        public Task ForgotPassword(string email)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task ResetPassword(ResetPasswordRequestDTO request)
+        {
+            throw new NotImplementedException();
         }
     }
 }
