@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using SportAdvisorAPI.Models;
 using SportAdvisorAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using SportAdvisorAPI.Helpers;
 
 namespace SportAdvisorAPI.Repository
 {
@@ -17,14 +18,16 @@ namespace SportAdvisorAPI.Repository
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
         private readonly SportAdvisorDbContext _context;
+        private readonly SendMail _sendMail;
 
-
-        public AuthManagerRepository(IMapper mapper, UserManager<User> userManager, IConfiguration configuration, SportAdvisorDbContext context)
+        public AuthManagerRepository(IMapper mapper, UserManager<User> userManager, IConfiguration configuration, SportAdvisorDbContext context, SendMail sendMail)
         {
             _mapper = mapper;
             _userManager = userManager;
             _configuration = configuration;
             _context = context;
+            _sendMail = sendMail;
+
         }
 
         public async Task<AuthResponseDTO?> Login(LoginUserDTO loginUserDTO)
@@ -52,13 +55,19 @@ namespace SportAdvisorAPI.Repository
         public async Task<IEnumerable<IdentityError>> Register(RegisterUserDto registerUserDtouserDto)
         {
             var user = _mapper.Map<User>(registerUserDtouserDto);
+            var verifyToken =  Guid.NewGuid();
+            string? emailToken = _configuration["SendGridApiKey"];
             user.UserName = registerUserDtouserDto.Email;
-            user.VerifyToken = Guid.NewGuid();
+            user.VerifyToken = verifyToken;
             var result = await _userManager.CreateAsync(user, registerUserDtouserDto.Password);
 
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, "User");
+                if (emailToken is not null)
+                {
+                    await _sendMail.SendEmailAsync(user.Name, registerUserDtouserDto.Email, emailToken, verifyToken.ToString());
+                }
             }
             return result.Errors;
         }

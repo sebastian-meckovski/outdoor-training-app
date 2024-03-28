@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using SportAdvisorAPI.Configurations;
 using SportAdvisorAPI.Contracts;
 using SportAdvisorAPI.Data;
+using SportAdvisorAPI.Helpers;
 using SportAdvisorAPI.Models;
 using SportAdvisorAPI.Repository;
 
@@ -46,6 +47,7 @@ builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITrainingSpotsRepository, TrainingSpotsRepository>();
 builder.Services.AddScoped<IAuthManager, AuthManagerRepository>();
+builder.Services.AddScoped<SendMail>();
 
 // authentication
 string jwtKey = builder.Configuration["JwtSettings:Key"] ?? throw new InvalidOperationException("JWT Key is not configured properly.");
